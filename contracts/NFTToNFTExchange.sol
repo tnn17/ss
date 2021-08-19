@@ -420,11 +420,10 @@ contract NftToNftExchange {
                 trade.bidderNFTAddress.safeTransferFrom(
                     address(this), msg.sender, trade.bidderNFTId);
                 delete nftOwnerToTradeIdToNftId[msg.sender];
-            } else (nftOwnerToTradeIdToNftId[msg.sender][_tradeId] == trade.askerNFTId) {
+            } else if (nftOwnerToTradeIdToNftId[msg.sender][_tradeId] == trade.askerNFTId) {
                 trade.askerNFTAddress.safeTransferFrom(
                     address(this), msg.sender, trade.askerNFTId);
                 delete nftOwnerToTradeIdToNftId[msg.sender];
-            }
             }
         }
     }
@@ -446,28 +445,34 @@ contract NftToNftExchange {
             trade.askerReceiveWei == false &&
             trade.askerReceiveWei == false
         ) {
-            if (addressToTradeToWei[trade.asker][_tradeId] == trade.price) {
+            if (addressToTradeIdToWei[trade.asker][_tradeId] == trade.price) {
                 address(this).transfer(trade.asker, trade.price);
-                delete addressToTradeToWei[trade.asker];
+                delete addressToTradeIdToWei[trade.asker];
             }
         }
     }
    
-    function getBidById(
-        bytes32 _bidId
+    function getTradeById(
+        bytes32 _tradeId
     )
     external 
-    view 
-    returns (bytes32, IERC721, uint256, uint256, uint256, bool) {
-        Bid memory bid = idToBid[_bidId];
+    view
+    isTradeExist(
+        _tradeId
+    )
+    returns (bytes32, IERC721, IERC721, uint256, uint256, uint256, bool, bool, bool) {
+        Trade memory trade = idToTrade[_tradeId];
 
         return (
-            _bidId,
-            bid.bidderNFTAddress,
-            bid.bidderNFTId,
-            bid.askNFTId,
-            bid.price,
-            bid.bidderPay
+            _tradeId,
+            trade.bidderNFTAddress,
+            trade.askerNFTAddress,
+            trade.bidderNFTId,
+            trade.askNFTId,
+            trade.price,
+            trade.bidderReceiveNft,
+            trade.askerReceiveWei,
+            trade.askerReceiveNft
         );
     }
 }
