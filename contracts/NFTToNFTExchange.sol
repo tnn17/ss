@@ -4,8 +4,8 @@ pragma solidity 0.8.7;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract NftToNftExchange {
-    uint constant private minDuration;
+contract NftToNftExchange is Ownable {
+    uint private minDuration;
     mapping (address => mapping(bytes32 => uint)) internal nftOwnerToTradeIdToNftId;
     mapping (bytes32 => Trade) internal idToTrade;
     mapping (address => mapping(bytes32 => uint)) internal addressToTradeIdToWei;
@@ -16,6 +16,7 @@ contract NftToNftExchange {
 
     struct Trade {
         address bidder;
+        address asker;
         IERC721 bidderNFTAddress;
         IERC721 askerNFTAddress;
         uint askerNFTId;
@@ -94,12 +95,6 @@ contract NftToNftExchange {
     ) {
         require(idToTrade[_tradeId].expirestAt > block.timestamp);
         _;
-    }
-
-    modifier nobodyReceivedNftOrWei(
-        bytes32 _tradeId
-    ) {
-        require(condition);
     }
 
     event BidCreated(
@@ -203,12 +198,16 @@ contract NftToNftExchange {
 
         idToTrade[tradeId] = Trade({
             bidder: msg.sender,
+            asker: address(0),
             bidderNFTAddress: _bidderNFTAddress,
             askerNFTAddress: _askerNFTAddress,
             askerNFTId: _askerNFTId,
             bidderNFTId:_bidderNFTId,
+            expirestAt: expirestAt,
             price: msg.value,
-            expirestAt: expirestAt 
+            bidderReceiveNft: false,
+            askerReceiveNft: false,
+            askerReceiveWei: false
         });
 
         emit BidCreated(
@@ -258,19 +257,24 @@ contract NftToNftExchange {
         uint expirestAt = block.timestamp + _duration;
 
         idToTrade[tradeId] = Trade({
+            bidder: address(0),
             asker: msg.sender,
             bidderNFTAddress: _bidderNFTAddress,
             askerNFTAddress: _askerNFTAddress,
             askerNFTId: _askerNFTId,
             bidderNFTId:_bidderNFTId,
+            expirestAt: expirestAt,
             price: _price,
-            expirestAt: expirestAt 
+            bidderReceiveNft: false,
+            askerReceiveNft: false,
+            askerReceiveWei: false
         });
 
         emit AskCreated(
             tradeId,
             msg.sender,
             _bidderNFTAddress,
+            _askerNFTAddress,
             _bidderNFTId,
             _askerNFTId,
             _price,
@@ -301,6 +305,9 @@ contract NftToNftExchange {
         Trade memory trade = idToTrade[_tradeId];
         
         if (_nftId == trade.bidderNFTId) {
+            if (trade.bidder == address(0)) {
+                trade.bidder = msg.sender;
+            }
             trade.bidderNFTAddress.safeTransferFrom(
                 trade.bidder, address(this), _nftId);
             nftOwnerToTradeIdToNftId[trade.bidder][_tradeId] = _nftId;
@@ -310,6 +317,9 @@ contract NftToNftExchange {
                 _nftId
             );
         } else {
+            if (trade.asker == address(0)) {
+                trade.asker = msg.sender;
+            }
             trade.askerNFTAddress.safeTransferFrom(
                 trade.asker, address(this), _nftId);
             nftOwnerToTradeIdToNftId[trade.asker][_tradeId] = _nftId;
@@ -364,13 +374,13 @@ contract NftToNftExchange {
         if (msg.sender == trade.bidder) {
             trade.askerNFTAddress.safeTransferFrom(
                 address(this), msg.sender, trade.askerNFTId);
-            delete nftOwnerToTradeIdToNftId[trade.asker];
+            nftOwnerToTradeIdToNftId[trade.asker][_tradeId] = 0;
             trade.bidderReceiveNft = true;
             emit NftWithdrawed(_tradeId, msg.sender, trade.askerNFTId);
         } else {
             trade.bidderNFTAddress.safeTransferFrom(
                 address(this), msg.sender, trade.bidderNFTId);
-            delete nftOwnerToTradeIdToNftId[trade.bidder];
+            nftOwnerToTradeIdToNftId[trade.bidder][_tradeId] = 0;
             trade.askerReceiveNft = true;
             emit NftWithdrawed(_tradeId, msg.sender, trade.bidderNFTId);
         }
@@ -395,10 +405,10 @@ contract NftToNftExchange {
     )
     {
         Trade memory trade = idToTrade[_tradeId];
-        address(this).transfer(msg.sender, trade[_tradeId].price);
-        delete addressToTradeIdToWei[trade.bidder];
+        payable(msg.sender).transfer(trade.price);
+        addressToTradeIdToWei[trade.bidder][_tradeId] = 0;
         trade.askerReceiveWei = true;
-        emit WeiWithdrawed(_tradeId, msg.sender, trade[_tradeId].price);
+        emit WeiWithdrawed(_tradeId, msg.sender, trade.price);
     }
 
     function unstakeNft(
@@ -419,11 +429,11 @@ contract NftToNftExchange {
              nftOwnerToTradeIdToNftId[msg.sender][_tradeId] == trade.bidderNFTId) {
                 trade.bidderNFTAddress.safeTransferFrom(
                     address(this), msg.sender, trade.bidderNFTId);
-                delete nftOwnerToTradeIdToNftId[msg.sender];
+                nftOwnerToTradeIdToNftId[msg.sender][_tradeId] = 0;
             } else if (nftOwnerToTradeIdToNftId[msg.sender][_tradeId] == trade.askerNFTId) {
                 trade.askerNFTAddress.safeTransferFrom(
                     address(this), msg.sender, trade.askerNFTId);
-                delete nftOwnerToTradeIdToNftId[msg.sender];
+                nftOwnerToTradeIdToNftId[msg.sender][_tradeId] = 0;
             }
         }
     }
@@ -446,8 +456,8 @@ contract NftToNftExchange {
             trade.askerReceiveWei == false
         ) {
             if (addressToTradeIdToWei[trade.asker][_tradeId] == trade.price) {
-                address(this).transfer(trade.asker, trade.price);
-                delete addressToTradeIdToWei[trade.asker];
+                payable(trade.asker).transfer(trade.price);
+                addressToTradeIdToWei[trade.asker][_tradeId] = 0;
             }
         }
     }
@@ -468,7 +478,7 @@ contract NftToNftExchange {
             trade.bidderNFTAddress,
             trade.askerNFTAddress,
             trade.bidderNFTId,
-            trade.askNFTId,
+            trade.askerNFTId,
             trade.price,
             trade.bidderReceiveNft,
             trade.askerReceiveWei,
