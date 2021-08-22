@@ -143,26 +143,6 @@ contract NftToNftExchange is Ownable {
         uint indexed amount
     );
 
-    event TradeExecuted(
-        bytes32 bidId,
-        address bidderAddress,
-        address askAddress,
-        IERC721 bidderNFTAddress,
-        IERC721 askNFTAddress,
-        uint indexed bidderNFTId,
-        uint indexed askNFTId,
-        uint indexed price
-    );
-
-    event TradeCanceled(
-        bytes32 bidId,
-        address bidderAddress,
-        IERC721 indexed bidderNFTAddress,
-        uint indexed bidderNFTId,
-        uint indexed askNFTId,
-        uint price
-    );
-
     function createBid(
         uint _bidderNFTId,
         IERC721 _bidderNFTAddress, 
