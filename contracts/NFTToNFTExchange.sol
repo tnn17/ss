@@ -28,11 +28,14 @@ contract NftToNftExchange is Ownable {
         bool askerReceiveWei;
     }
 
-    modifier nftIdNotEqual(
+    modifier nftNotEqual(
         uint _bidderNFTId,
+        IERC721 _bidderNFTAddress,
+        IERC721 _askerNFTAddress,
         uint _askerNFTId
     ) {
-        require(_bidderNFTId != _askerNFTId);
+        require((_bidderNFTId != _askerNFTId) && 
+        (_bidderNFTAddress != _askerNFTAddress), "NFT can not be equal.");
         _;
     }
 
@@ -152,8 +155,10 @@ contract NftToNftExchange is Ownable {
     ) 
         external 
         payable
-        nftIdNotEqual(
+        nftNotEqual(
             _bidderNFTId,
+            _bidderNFTAddress,
+            _askerNFTAddress,
             _askerNFTId
         )
         expirationTimeIsLongerThatMinDuration(
@@ -212,8 +217,10 @@ contract NftToNftExchange is Ownable {
         uint _price
     )
     external
-    nftIdNotEqual(
+    nftNotEqual(
             _bidderNFTId,
+            _bidderNFTAddress,
+            _askerNFTAddress,
             _askerNFTId
         )
     expirationTimeIsLongerThatMinDuration(
