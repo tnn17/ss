@@ -70,7 +70,8 @@ contract NftToNftExchange is Ownable {
     modifier isTradeExist(
         bytes32 _tradeId
     ) {
-        require(idToTrade[_tradeId].expirestAt != 0);
+        require(idToTrade[_tradeId].expirestAt != 0,
+        "Trade does not exist!");
         _;
     }
 
