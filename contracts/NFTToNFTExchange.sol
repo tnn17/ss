@@ -42,7 +42,8 @@ contract NftToNftExchange is Ownable {
     modifier expirationTimeIsLongerThatMinDuration(
         uint _duration
     ) {
-        require(_duration >= minDuration);
+        require(_duration >= minDuration, 
+        "The duration value cannot be less than the minimum duration value!");
         _;
     }
 
