@@ -99,7 +99,8 @@ contract NftToNftExchange is Ownable {
     modifier isSenderAsker(
         bytes32 _tradeId
     ) {
-        require(idToTrade[_tradeId].asker == msg.sender);
+        require(idToTrade[_tradeId].asker == msg.sender,
+        "The sender's address must match the asker's address!");
         _;
     }
 
