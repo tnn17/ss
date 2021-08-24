@@ -35,7 +35,7 @@ contract NftToNftExchange is Ownable {
         uint _askerNFTId
     ) {
         require((_bidderNFTId != _askerNFTId) && 
-        (_bidderNFTAddress != _askerNFTAddress), "NFT can not be equal.");
+        (_bidderNFTAddress != _askerNFTAddress), "NFT can not be equal!");
         _;
     }
 
@@ -51,7 +51,9 @@ contract NftToNftExchange is Ownable {
         address _addr,
         bytes32 _tradeId
     ) {
-        require((_addr == idToTrade[_tradeId].bidder) || (_addr == idToTrade[_tradeId].asker));
+        require((_addr == idToTrade[_tradeId].bidder) || 
+        (_addr == idToTrade[_tradeId].asker),
+        "msg.sender must bu asker or bidder!");
         _;
     }
 
