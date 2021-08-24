@@ -107,7 +107,8 @@ contract NftToNftExchange is Ownable {
     modifier isTradeAvailable(
         bytes32 _tradeId
     ) {
-        require(idToTrade[_tradeId].expirestAt > block.timestamp);
+        require(idToTrade[_tradeId].expirestAt > block.timestamp,
+        "The timestamp of the trade must be less than the block timestamp value!");
         _;
     }
 
