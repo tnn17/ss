@@ -79,9 +79,12 @@ contract NftToNftExchange is Ownable {
         bytes32 _tradeId
     ) {
         Trade memory trade = idToTrade[_tradeId];
-        require(addressToTradeIdToWei[trade.bidder][_tradeId] == trade.price);
-        require(nftOwnerToTradeIdToNftId[trade.bidder][_tradeId] == trade.bidderNFTId);
-        require(nftOwnerToTradeIdToNftId[trade.asker][_tradeId] == trade.askerNFTId);
+        require(
+            addressToTradeIdToWei[trade.bidder][_tradeId] == trade.price &&
+            nftOwnerToTradeIdToNftId[trade.bidder][_tradeId] == trade.bidderNFTId &&
+            nftOwnerToTradeIdToNftId[trade.asker][_tradeId] == trade.askerNFTId,
+            "Trade must be payed!"
+        );
         _;
     }
 
