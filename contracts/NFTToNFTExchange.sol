@@ -75,7 +75,7 @@ contract NftToNftExchange is Ownable {
         _;
     }
 
-    modifier isTradePayed(
+    modifier isTradePaid(
         bytes32 _tradeId
     ) {
         Trade memory trade = idToTrade[_tradeId];
@@ -83,7 +83,7 @@ contract NftToNftExchange is Ownable {
             addressToTradeIdToWei[trade.bidder][_tradeId] == trade.price &&
             nftOwnerToTradeIdToNftId[trade.bidder][_tradeId] == trade.bidderNFTId &&
             nftOwnerToTradeIdToNftId[trade.asker][_tradeId] == trade.askerNFTId,
-            "Trade must be payed!"
+            "Trade must be paid!!"
         );
         _;
     }
@@ -91,7 +91,8 @@ contract NftToNftExchange is Ownable {
     modifier isSenderBidder(
         bytes32 _tradeId
     ) {
-        require(idToTrade[_tradeId].bidder == msg.sender);
+        require(idToTrade[_tradeId].bidder == msg.sender,
+        "The sender's address must match the bidder's address!");
         _;
     }
 
@@ -137,7 +138,7 @@ contract NftToNftExchange is Ownable {
         uint indexed nftId
     );
 
-    event AmountPayed(
+    event AmountPaid(
         bytes32 indexed tradeId,
         address indexed bidder,
         uint indexed amount
@@ -344,7 +345,7 @@ contract NftToNftExchange is Ownable {
     {
         require(msg.value == idToTrade[_tradeId].price);
         addressToTradeIdToWei[msg.sender][_tradeId] += msg.value;
-        emit AmountPayed(
+        emit AmountPaid(
             _tradeId,
             msg.sender,
             msg.value
@@ -362,7 +363,7 @@ contract NftToNftExchange is Ownable {
         msg.sender,
         _tradeId
     )
-    isTradePayed(
+    isTradePaid(
         _tradeId
     )
     {
@@ -393,7 +394,7 @@ contract NftToNftExchange is Ownable {
         msg.sender,
         _tradeId
     )
-    isTradePayed(
+    isTradePaid(
         _tradeId
     ) 
     isSenderAsker(
