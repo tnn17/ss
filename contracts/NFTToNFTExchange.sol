@@ -61,7 +61,9 @@ contract NftToNftExchange is Ownable {
         bytes32 _tradeId,
         uint _nftId
     ) {
-        require((_nftId == idToTrade[_tradeId].bidderNFTId) && (_nftId == idToTrade[_tradeId].askerNFTId));
+        require((_nftId == idToTrade[_tradeId].bidderNFTId) &&
+        (_nftId == idToTrade[_tradeId].askerNFTId),
+        "The NFT identifier is not the seller's NFT or the buyer's NFT!");
         _;
     }
 
